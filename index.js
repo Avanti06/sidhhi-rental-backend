@@ -17,14 +17,24 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
+    // origin: function (origin, callback) {
+    //     if (!origin || allowedOrigins.includes(origin)) {
+    //       callback(null, true);
+    //     } else {
+    //       callback(new Error("Not allowed by CORS"));
+    //     }
+    //   },
+    //   credentials: true
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+      console.log("Origin received:", origin);  // Debugging log
+      if (!origin || allowedOrigins.includes(origin)) {
           callback(null, true);
-        } else {
+      } else {
+          console.log("Blocked by CORS:", origin);  // Log blocked requests
           callback(new Error("Not allowed by CORS"));
-        }
-      },
-      credentials: true
+      }
+  },
+  credentials: true
 }));
 
 // Serve uploaded images as static files
