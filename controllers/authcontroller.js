@@ -1,0 +1,129 @@
+const User = require("../models/userModel");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const path = require("path");
+require("dotenv").config();
+
+
+exports.register = async (req, res) => {
+    try {
+        const { name, email, password, phoneNo, role, company_name, gst_number } = req.body;
+
+        if (role === "provider" && (!company_name || !gst_number)) {
+            return res.status(400).json({ message: "Company name and GST number are required for providers" });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Set company logo path if file is uploaded
+        let company_logo = null;
+        if (req.file) {
+            company_logo = path.join("uploads", req.file.filename);
+        }
+
+        // Create User
+        const user = new User({
+            name,
+            email,
+            password: hashedPassword,
+            phoneNo,
+            role,
+            company_name: role === "provider" ? company_name : null,
+            gst_number: role === "provider" ? gst_number : null,
+            company_logo,
+            isApproved: role === "user",
+        });
+
+        await user.save();
+        res.status(201).json({ message: "User registered.", user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.login = async (req, res) => {
+  try {
+      const { email, password } = req.body;
+
+      // Check if user exists
+      const user = await User.findOne({ email });
+      if (!user) return res.status(400).json({ message: "Invalid email or password" });
+
+      // Compare password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
+
+      // Check provider approval
+      if (user.role === "provider" && !user.isApproved) {
+          return res.status(403).json({ message: "Your account is pending approval by admin" });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+      res.status(200).json({
+          message: "Login successful",
+          token,
+          user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              isApproved: user.isApproved
+          }
+      });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+};
+
+//Register  a new Driver by Admin only
+exports.registerDriver = async (req, res) => {
+    try {
+        const { name, email, password, phoneNo, licenseNumber, vehicleType} = req.body;
+
+        //Check if driver alredy exists
+        const existingDriver = await User.findOne({ email });
+        if (existingDriver) {
+          return res.status(400).json({ message: "Driver already exists" });
+        }
+
+         // Validate required fields
+         if (!licenseNumber || !vehicleType) {
+            return res.status(400).json({ message: "License number and vehicle type are required for drivers" });
+        }
+
+         // Hash password
+         const hashedPassword = await bcrypt.hash(password, 10);
+       
+          // Set driver photo path if file is uploaded
+         let driverPhoto = null;
+        if (req.file) {
+             driverPhoto = path.join(req.file.destination, req.file.filename);
+        }
+
+         // Create new driver
+    const driver = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        phoneNo,
+        role: "driver",
+        licenseNumber,
+        vehicleType,
+        availabilityStatus: 'active',
+        driverPhoto,
+        isApproved: true, // Admin must approve
+        assignedTrips: [],
+        earings: 0
+      });
+      
+      await driver.save();
+      res.status(201).json({ message: "Driver registered successfully.", driver });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+
+
+};
