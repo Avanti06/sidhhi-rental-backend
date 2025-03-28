@@ -1,45 +1,33 @@
 const multer = require("multer");
-const path = require("path")
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../config/cloudinaryConfig");
 
-// Function to create folder if it doesn't exist
-const ensureDirExists = (dir) => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
+// Dynamic folder selection based on API path
+const getFolderName = (req) => {
+    if (req.baseUrl.includes("rental")) return "uploads/rentals";
+    if (req.baseUrl.includes("driver")) return "uploads/drivers";
+    if (req.baseUrl.includes("user")) return "uploads/users";
+    return "uploads/others"; // Default folder
 };
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        let uploadDir = "uploads/others"; // Default folder
-
-        // Check API path and set directory
-        if (req.baseUrl.includes("rental")) {
-            uploadDir = "uploads/rentals";
-        } else if (req.baseUrl.includes("driver")) {
-            uploadDir = "uploads/drivers";
-        } else if (req.baseUrl.includes("user")) {
-            uploadDir = "uploads/users";
-        }
-
-        // Ensure directory exists
-        ensureDirExists(uploadDir);
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
+// Cloudinary storage configuration
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => {
+        return {
+            folder: getFolderName(req), // Dynamic folder selection
+            format: "png", // Convert all images to PNG
+            public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+        };
     },
 });
 
 // File filter: Allow only images
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimeType = allowedTypes.test(file.mimetype);
+    const extname = allowedTypes.test(file.mimetype);
 
-    if (extname && mimeType) {
+    if (extname) {
         return cb(null, true);
     }
     cb(new Error("Only images (JPG, PNG, GIF, WEBP) are allowed"));
@@ -50,6 +38,6 @@ const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
     fileFilter,
-}).single("image"); // Expect only one image field named "image"
+}).single("image");
 
-module.exports =   upload  ;
+module.exports = upload;

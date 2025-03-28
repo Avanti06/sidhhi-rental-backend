@@ -11,9 +11,9 @@ exports.addRental = async (req, res) => {
         }
 
             // Store image path if file is uploaded
-        let images = null;
+        let imageUrl = null;
         if (req.file) {
-            images = path.join(req.file.destination, req.file.filename);
+            imageUrl = req.file.path;
         }
 
         const rental = new Rental({
@@ -23,7 +23,7 @@ exports.addRental = async (req, res) => {
             price,
             location,
             description,
-            images
+            images: imageUrl,
         });
 
         await rental.save();
@@ -40,14 +40,14 @@ exports.updateRental = async (req, res) => {
         const updates = req.body;
 
         // Set driver photo path if file is uploaded
-        let images = null;
+        let imageUrl = null;
         if (req.file) {
-             images = path.join(req.file.destination, req.file.filename);
+             imageUrl = req.file.path;
         }
 
         const rental = await Rental.findOneAndUpdate(
             { _id: rentalId, admin: req.user._id }, // Verify admin ownership
-            updates,
+            { ...updates, images: imageUrl || updates.images },
             { new: true } // Return updated rental
         );
 
