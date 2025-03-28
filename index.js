@@ -13,7 +13,7 @@ app.use(express.json());
 
 const allowedOrigins = [
     "http://localhost:4200",
-    "https://sidhhi-rental-frontend.vercel.app",  // Or specify your frontend URL
+    "https://sidhhi-rental-frontend.vercel.app/api",  // Or specify your frontend URL
 
 ];
 
