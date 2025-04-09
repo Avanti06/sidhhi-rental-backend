@@ -15,6 +15,10 @@ exports.createOrder = async (req, res) => {
         };
 
         const order = await razorpay.orders.create(options);
+        // ✅ Save orderId to the Booking entry
+       await Booking.findByIdAndUpdate(bookingId, {
+    orderId: order.id
+});
         res.status(200).json(order);
 
     } catch (error) {
@@ -46,9 +50,9 @@ exports.verifyPayment = async (req, res) => {
         const updatedBooking = await Booking.findOneAndUpdate(
             { orderId: razorpay_order_id }, // Find booking by orderId
             { 
+              paymentId: razorpay_payment_id,
               paymentStatus: "confirmed", 
               status: "confirmed",
-              paymentId: razorpay_payment_id,
               updatedAt: new Date() 
             },
             { new: true } // Return the updated document
