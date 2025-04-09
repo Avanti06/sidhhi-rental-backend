@@ -49,6 +49,29 @@ exports.createBooking = async (req, res) => {
     }
 };
 
+// ✅ Admin - Get All Upcoming Bookings
+exports.getUpcomingBookings = async (req, res) => {
+    try {
+        // const currentDate = new Date();
+
+        // Optional: Only fetch upcoming bookings with confirmed/pending status
+        const bookings = await Booking.find({
+            status: { $in: ["confirmed", "pending"] }
+        })
+        .populate("userId", "name email")         // Optional: Populate user info
+        .populate("vehicleId", "title type")      // Optional: Populate vehicle info                 // Sort by upcoming date
+
+        res.status(200).json({
+            message: "Upcoming bookings fetched successfully",
+            count: bookings.length,
+            bookings
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error fetching upcoming bookings", error });
+    }
+};
+
 
 
 exports.payRemainingAmount = async (req, res) => {

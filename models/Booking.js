@@ -8,7 +8,7 @@ const BookingSchema = new mongoose.Schema({
         },
     vehicleId: {
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "Vehicle", 
+        ref: "Rental", 
         required: true 
     },
     driverId: { type: mongoose.Schema.Types.ObjectId, ref: "Driver", default: null },

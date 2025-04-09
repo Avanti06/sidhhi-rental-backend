@@ -19,7 +19,7 @@ exports.register = async (req, res) => {
         // Set company logo path if file is uploaded
         let company_logo = null;
         if (req.file) {
-            company_logo = path.join("uploads", req.file.filename);
+            company_logo = req.file.path;
         }
 
         // Create User
@@ -96,11 +96,14 @@ exports.registerDriver = async (req, res) => {
 
          // Hash password
          const hashedPassword = await bcrypt.hash(password, 10);
-       
+       // Debug Multer File Upload
+         console.log("Uploaded File:", req.file);
+
           // Set driver photo path if file is uploaded
-         let driverPhoto = null;
-        if (req.file) {
-             driverPhoto = path.join(req.file.destination, req.file.filename);
+        let image = req.file ? req.file.path || req.file.secure_url: null;
+        if (!image) {
+        
+            return res.status(400).json({ message: "Cloudinary upload failed" });
         }
 
          // Create new driver
@@ -113,7 +116,7 @@ exports.registerDriver = async (req, res) => {
         licenseNumber,
         vehicleType,
         availabilityStatus: 'active',
-        driverPhoto,
+        driverPhoto: image,
         isApproved: true, // Admin must approve
         assignedTrips: [],
         earings: 0
