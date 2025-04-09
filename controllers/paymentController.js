@@ -38,6 +38,9 @@ exports.verifyPayment = async (req, res) => {
         hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
         const generatedSignature = hmac.digest("hex");
         
+        if (generatedSignature !== razorpay_signature) {
+            return res.status(400).json({ error: "Invalid signature, verification failed" });
+        } 
           
         //updated booking status in database
         const updatedBooking = await Booking.findOneAndUpdate(
@@ -45,16 +48,22 @@ exports.verifyPayment = async (req, res) => {
             { 
               paymentStatus: "confirmed", 
               paymentId: razorpay_payment_id,
+              status: "confirmed",
               updatedAt: new Date() 
             },
             { new: true } // Return the updated document
           );
 
-        if (generatedSignature === razorpay_signature) {
-            res.json({ success: true, message: "Payment Verified Successfully" });
-        } else {
-            res.status(400).json({ error: "Invalid signature, verification failed" });
-        }
+          if (!updatedBooking) {
+            return res.status(404).json({ error: "Booking not found for this order ID" });
+          }
+
+          res.status(200).json({
+            success: true,
+            message: "Payment verified successfully",
+            booking: updatedBooking
+          });
+        
     } catch (error) {
         console.error("Error verifying payment:", error);
         res.status(500).json({ error: "Error verifying payment" });
