@@ -60,7 +60,7 @@ const BookingSchema = new mongoose.Schema({
         enum: ["pending", "confirmed", "completed"], 
         default: "pending" 
     },
-    paymentTransactionId: { 
+    orderId: { 
         type: String, 
         default: null 
     },

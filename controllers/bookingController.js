@@ -29,23 +29,40 @@ exports.createBooking = async (req, res) => {
         try {
             order = await razorpay.orders.create(options);
         } catch (paymentError) {
-            return res.status(500).json({ message: "Error creating Razorpay order", error: paymentError });
+            return res.status(500).json({
+                 message: "Error creating Razorpay order",
+                 error: paymentError 
+            });
         }
 
 
         const newBooking = new Booking({
-            userId, vehicleId, tripType, 
+            userId,
+            vehicleId, 
+            tripType, 
             pickupLocation: JSON.stringify(pickupLocation), 
             dropLocation: JSON.stringify(dropLocation),
-            startDate, endDate, totalAmount, bookingAmount, remainingAmount,
-            paymentTransactionId: order.id,paymentStatus: "pending",
+            startDate, 
+            endDate, 
+            totalAmount, 
+            bookingAmount, 
+            remainingAmount,
+            orderId: order.id,
+            paymentStatus: "pending",
         });
 
         await newBooking.save();
-        res.status(201).json({ message: "Booking created successfully", booking: newBooking });
+        res.status(201).json({ 
+            message: "Booking created successfully", 
+            booking: newBooking,
+            razorpayOrder: order 
+        });
 
     } catch (error) {
-        res.status(500).json({ message: "Error creating booking", error });
+        res.status(500).json({ 
+            message: "Error creating booking", 
+            error 
+        });
     }
 };
 

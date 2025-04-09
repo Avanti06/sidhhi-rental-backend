@@ -47,8 +47,8 @@ exports.verifyPayment = async (req, res) => {
             { orderId: razorpay_order_id }, // Find booking by orderId
             { 
               paymentStatus: "confirmed", 
-              paymentId: razorpay_payment_id,
               status: "confirmed",
+              paymentId: razorpay_payment_id,
               updatedAt: new Date() 
             },
             { new: true } // Return the updated document
