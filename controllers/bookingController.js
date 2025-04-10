@@ -1,7 +1,8 @@
 const Booking = require("../models/Booking");
 const { calculateDistance } = require("../utils/distanceCalculator");
 const razorpay = require("../config/razorpay");
-
+const sendEmail = require("../utils/mailer");
+const User = require("../models/userModel");
 
 // ✅  Create Booking
 exports.createBooking = async (req, res) => {
@@ -89,8 +90,104 @@ exports.getUpcomingBookings = async (req, res) => {
     }
 };
 
+// controllers/bookingController.js
 
+exports.approveBookingByAdmin = async (req, res) => {
+    try {
+        const bookingId = req.params.id;
 
+        const booking = await Booking.findById(bookingId);
+
+        if (!booking) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
+        if (booking.status === "confirmed") {
+            return res.status(400).json({ message: "Booking is already confirmed" });
+        }
+
+        if (booking.paymentStatus !== "confirmed") {
+            return res.status(400).json({ message: "Payment not completed yet" });
+        }
+
+        booking.status = "confirmed";
+        booking.updatedAt = new Date();
+
+        await booking.save();
+
+        // ✅ Send email to user
+        const user = await User.findById(booking.userId);
+        if (user?.email) {
+            await sendEmail(
+                user.email,
+                "Booking Approved - Sidhi Rental",
+                `<h3>Dear ${user.name || "Customer"},</h3>
+                <p>Your booking has been <strong>approved</strong> by the admin.</p>
+                <p><strong>Booking ID:</strong> ${booking._id}</p>
+                <p>Trip Dates: ${booking.startDate} to ${booking.endDate}</p>
+                <p>Our team will connect with you shortly for further details.</p>
+                <br>
+                <p>Thanks for booking with Sidhi Tour & Travels!</p>`
+            );
+        }
+
+        res.status(200).json({ 
+            message: "Booking approved  successfully and email send", 
+            booking 
+        });
+
+    } catch (error) {
+        console.error("Error approving booking:", error);
+        res.status(500).json({ message: "Error approving booking", error });
+    }
+};
+
+exports.rejectBookingByAdmin = async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      const booking = await Booking.findById(bookingId).populate("userId");
+  
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      if (booking.status !== "pending") return res.status(400).json({ message: "Booking already processed" });
+  
+      booking.status = "rejected";
+      booking.updatedAt = new Date();
+      await booking.save();
+  
+      // Send rejection email
+      const subject = "Booking Rejected ❌";
+      const html = `
+        <p>Dear ${booking.userId.name},</p>
+        <p>We regret to inform you that your booking for <strong>${booking.vehicleId.name}</strong> on <strong>${booking.startDate.toDateString()}</strong> has been <strong style="color:red;">rejected</strong>.</p>
+        <p>If you have questions, please contact us.</p>
+        <p>Regards,<br/>Sidhi Tour & Travels</p>
+      `;
+      await sendEmail(booking.userId.email, subject, html);
+  
+      res.status(200).json({ message: "Booking rejected and email sent", booking });
+  
+    } catch (error) {
+      console.error("Error rejecting booking:", error);
+      res.status(500).json({ message: "Error rejecting booking", error });
+    }
+  };
+  
+// GET /api/bookings/paid
+
+exports.getPaidBookings = async (req, res) => {
+    try {
+      const bookings = await Booking.find({ paymentStatus: 'confirmed' })
+        .populate('userId', 'name email');
+  
+      res.status(200).json({
+        message: 'Paid bookings fetched successfully',
+        bookings
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch paid bookings', error });
+    }
+  };
+  
 exports.payRemainingAmount = async (req, res) => {
     try {
         const { bookingId } = req.params;

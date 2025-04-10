@@ -1,8 +1,8 @@
 const razorpay = require("../config/razorpay");
 const Booking = require("../models/Booking");
 const crypto = require("crypto");
-
-
+const sendEmail = require('../utils/mailer');
+const User = require('../models/userModel');
 // ✅ 1. Create a Payment Order
 exports.createOrder = async (req, res) => {
     const { amount, currency, bookingId } = req.body;
@@ -52,7 +52,6 @@ exports.verifyPayment = async (req, res) => {
             { 
               paymentId: razorpay_payment_id,
               paymentStatus: "confirmed", 
-              status: "confirmed",
               updatedAt: new Date() 
             },
             { new: true } // Return the updated document
@@ -62,9 +61,25 @@ exports.verifyPayment = async (req, res) => {
             return res.status(404).json({ error: "Booking not found for this order ID" });
           }
 
+
+          // ✅ Send confirmation email
+    const user = await User.findById(updatedBooking.userId);
+    if (user?.email) {
+      await sendEmail(
+        user.email,
+        "Payment Successful - Sidhi Rental",
+        `<h3>Dear ${user.name || "Customer"},</h3>
+        <p>Your payment was <strong>successful</strong> and your booking is now <strong>confirmed</strong>.</p>
+        <p><strong>Booking ID:</strong> ${updatedBooking._id}</p>
+        <p>Trip Dates: ${updatedBooking.startDate} to ${updatedBooking.endDate}</p>
+        <p>We will notify you once the admin approves your booking.</p>
+        <br>
+        <p>Thanks for choosing Sidhi Tour & Travels!</p>`
+      );
+    }
           res.status(200).json({
             success: true,
-            message: "Payment verified successfully",
+            message: "Payment verified  and email sent successfully",
             booking: updatedBooking
           });
         
