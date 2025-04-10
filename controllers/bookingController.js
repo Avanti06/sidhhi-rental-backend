@@ -118,5 +118,26 @@ exports.payRemainingAmount = async (req, res) => {
     }
 };
 
+// ✅ Get Bookings for Logged-In User
+exports.getMyBookings = async (req, res) => {
+    try {
+        const userId = req.user.id; // Assuming you have middleware that attaches user to req.user
+
+        const bookings = await Booking.find({ userId })
+            .populate("vehicleId", "name category")
+            .sort({ startDate: -1 }); // optional: recent first
+
+        res.status(200).json({
+            message: "Your bookings fetched successfully",
+            count: bookings.length,
+            bookings
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error fetching your bookings", error });
+    }
+};
+
+
 
 
