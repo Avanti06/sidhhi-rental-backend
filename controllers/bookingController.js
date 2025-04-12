@@ -235,6 +235,18 @@ exports.getMyBookings = async (req, res) => {
     }
 };
 
-
-
-
+exports.getAllAssignedBookings = async (req, res) => {
+    try {
+      const bookings = await Booking.find({ 
+        assignedDriver : { $ne: null }
+        }) // only assigned bookings
+        .populate('vehicleId', 'name')
+        .populate('userId', 'name phone email')
+        .populate('assignedDriver', 'name phone');
+  
+      res.status(200).json(bookings);
+    } catch (error) {
+      console.error('Error fetching assigned bookings:', error);
+      res.status(500).json({ message: 'Failed to fetch assigned bookings' });
+    }
+  };

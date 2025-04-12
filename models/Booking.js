@@ -11,7 +11,7 @@ const BookingSchema = new mongoose.Schema({
         ref: "Rental", 
         required: true 
     },
-    driverId: { type: mongoose.Schema.Types.ObjectId, ref: "Driver", default: null },
+    assignedDriver: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
 
     tripType: { 
         type: String, 
@@ -52,7 +52,7 @@ const BookingSchema = new mongoose.Schema({
     },
     status: { 
         type: String, 
-        enum: ["pending", "confirmed", "rejected" ,"cancelled", "completed"], 
+        enum: ["pending", "confirmed","assignedDriver", "rejected" ,"cancelled", "completed"], 
         default: "pending" 
     },
     paymentStatus: { 
