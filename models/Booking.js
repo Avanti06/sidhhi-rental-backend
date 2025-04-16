@@ -37,7 +37,11 @@ const BookingSchema = new mongoose.Schema({
     endDate: { 
         type: Date
     },
-    
+    tripStatus: {
+        type: String,
+        enum: ["upcoming", "ongoing", "completed"],
+        default: "upcoming"
+    }, 
     totalAmount: { 
         type: Number, 
         required: true 

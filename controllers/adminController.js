@@ -90,9 +90,6 @@ exports.assignDriverToBooking = async (req, res) => {
         booking.status = 'assignedDriver';
        
 
-
-        // Update driver
-        driver.availabilityStatus = 'busy';
         driver.assignedTrips.push({
         bookingId: booking._id,
         status: 'accepted',
