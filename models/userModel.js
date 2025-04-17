@@ -26,23 +26,8 @@ const UserSchema = new mongoose.Schema({
     },
     role : {
         type: String,
-        enum: ['admin', 'user', 'provider', 'driver'],
+        enum: ['admin', 'user', 'driver'],
         default: 'user',
-    },
-    //provider 
-    company_name: {
-        type: String,
-        default: null,
-        required: function () { return this.role === 'provider'; }
-    },
-    company_logo: {
-         type: String, 
-         default: null 
-    },
-    gst_number: {
-        type: String,
-        default: null,
-        required: function () { return this.role === 'provider'; }
     },
     // Driver-Specific Fields
     licenseNumber: {

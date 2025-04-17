@@ -5,22 +5,23 @@ const path = require("path");
 require("dotenv").config();
 
 
-exports.register = async (req, res) => {
+exports.registerUser = async (req, res) => {
     try {
-        const { name, email, password, phoneNo, role, company_name, gst_number } = req.body;
+        const { name, email, password, phoneNo } = req.body;
 
-        if (role === "provider" && (!company_name || !gst_number)) {
-            return res.status(400).json({ message: "Company name and GST number are required for providers" });
-        }
+        // Validate required fields
+    if (!name || !email || !password || !phoneNo) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
 
+       // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "Email already exists." });
+    }
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Set company logo path if file is uploaded
-        let company_logo = null;
-        if (req.file) {
-            company_logo = req.file.path;
-        }
 
         // Create User
         const user = new User({
@@ -28,11 +29,8 @@ exports.register = async (req, res) => {
             email,
             password: hashedPassword,
             phoneNo,
-            role,
-            company_name: role === "provider" ? company_name : null,
-            gst_number: role === "provider" ? gst_number : null,
-            company_logo,
-            isApproved: role === "user",
+            role:"user",
+            isApproved: true,
         });
 
         await user.save();
