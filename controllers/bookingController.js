@@ -6,7 +6,7 @@ const User = require("../models/userModel");
 
 // ✅  Create Booking
 exports.createBooking = async (req, res) => {
-
+    console.log("incomming booking data:", req.body );
     // console.log("User Info:", req.user);
     const { vehicleId, tripType, pickupLocation, dropLocation, startDate, endDate, totalAmount, bookingAmount, remainingAmount } = req.body;
 
@@ -189,8 +189,9 @@ exports.getPaidBookings = async (req, res) => {
   };
   
 exports.payRemainingAmount = async (req, res) => {
+
+    const { bookingId } = req.body;
     try {
-        const { bookingId } = req.params;
 
         const booking = await Booking.findById(bookingId);
         if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -198,6 +199,11 @@ exports.payRemainingAmount = async (req, res) => {
         // Check if booking is completed
         if (booking.status !== "completed") {
             return res.status(400).json({ message: "Trip not completed yet" });
+        }
+
+        // Check if there's actually a remaining amount
+        if (booking.remainingAmount <= 0) {
+            return res.status(400).json({ message: "No remaining amount to pay" });
         }
 
         // Create Razorpay Order for the remaining amount

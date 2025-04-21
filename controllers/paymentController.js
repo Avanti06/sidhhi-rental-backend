@@ -88,3 +88,23 @@ exports.verifyPayment = async (req, res) => {
         res.status(500).json({ error: "Error verifying payment" });
     }
 };
+
+exports.confirmRemainingPayment = async (req, res) => {
+  const { bookingId, paymentId } = req.body;
+
+  try {
+      const booking = await Booking.findById(bookingId);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      booking.remainingAmount = 0;
+      booking.paymentStatus = "completed";
+      booking.paymentId = paymentId;
+
+      await booking.save();
+
+      res.status(200).json({ message: "Payment confirmed", booking });
+  } catch (error) {
+      console.error("Error confirming payment:", error);
+      res.status(500).json({ message: "Failed to confirm payment", error });
+  }
+};

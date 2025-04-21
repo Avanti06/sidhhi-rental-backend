@@ -17,7 +17,7 @@ router.post("/rentalAdd", protect, adminOnly, upload, addRental);
 router.put("/rental/:rentalId", protect, adminOnly, upload, updateRental);
 router.delete("/rental/:rentalId", protect,adminOnly, deleteRental);
 router.get("/rentals", protect, getRentals);
-router.get("/rental/:rentalId", protect, adminOnly, getRentalById);
+router.get("/rental/:rentalId", protect, getRentalById);
 router.get("/getAllRentals",getAllRentalsForCustomers );
 router.get("/earnings", protect, getEarnings);
 

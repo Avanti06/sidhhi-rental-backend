@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const connectDB = require("./config/db");
 const cors = require("cors");
 const path = require('path');
+const invoiceRoutes = require('./routes/invoiceRoutes');
 
 dotenv.config();
 connectDB();
@@ -39,7 +40,8 @@ app.use(cors({
 
 // Serve uploaded images as static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+//Serve static files from the invoices folder
+app.use('/invoices', express.static(path.join(__dirname, 'controllers/invoices')));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -48,6 +50,8 @@ app.use('/api/rental', require('./routes/rentalRoutes'));
 app.use('/api/booking', require('./routes/bookingRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/driver', require("./routes/driverRoutes"));
+
+app.use('/api/invoice', invoiceRoutes);
 //create server
 app.get('/', (req, res) => {
     res.send('Backend is running on Vercel')
